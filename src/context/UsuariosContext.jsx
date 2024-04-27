@@ -4,95 +4,112 @@ export const UsuariosContext = createContext()
 
 export const UsuariosContextProvider = ({children}) => {
   const [usuarios, setUsuarios] = useState([])
-  
+
   useEffect(() => {
-    lerUsuarios()
+    getUsuarios()
+    //localStorage.setItem("idUsuarioLogado", 66)
   }, [])
 
-  function lerUsuarios(){
-    fetch("http://localhost:3000/usuarios") // GET
+  function getUsuarios(){
+    fetch("http://localhost:3000/usuarios")
     .then(response => response.json())
     .then(dados => setUsuarios(dados))
     .catch(erro => console.log(erro))
   }
 
-  async function procurarUsuario(email, senha){
+  function getUsuarioPorId(id){
+    fetch("http://localhost:3000/usuarios/" + id)
+    .then(response => response.json())
+    .then(dados => setUsuarios(dados))
+    .catch(erro => console.log(erro))
+  }
+
+  async function login(email, senha){
     try {
-      let listaUsuarios = await fetch("http://localhost:3000/usuarios")
+      debugger
+      const response = await fetch("http://localhost:3000/usuarios")
+      const dados = await response.json()
 
       let usuarioExiste = false
 
-      listaUsuarios.map(usuario => {
+      dados.map(usuario => {
+        debugger
         if(usuario.email == email){
           usuarioExiste = true
+          if(usuario.senha == senha){
+            localStorage.setItem("isAutenticado", true)
+            window.location.href = "/"
+            return
+          }
+
+          alert("Senha incorreta!")
+          return
         }
-        if(usuario.senha == senha){
-          // salvo id no localStorage
-          // salvo que ele está autenticado localStorage
-          // redireciona para o dashboard
-        }
+
       })
+
+      if(!usuarioExiste){
+        alert("Não existe um usuário com esse email!")
+      }
+
     } catch {
 
     }
   }
 
-  async function lerUsuariosPorId(id){
-    debugger
-    try {
-      let resultado = await fetch("http://localhost:3000/usuarios/" + id) // GET
-      return resultado.json()
-    } catch {
-
+  function cadastrarUsuario(usuario){
+    if(usuario.nome == ""){
+      alert("O usuário precisa ter um nome!")
     }
 
-  }
-
-  function cadastrarUsuario(novoUsuario){
     fetch("http://localhost:3000/usuarios", {
-      method: "POST", // cadastrar
-      body: JSON.stringify(novoUsuario),
+      method: "POST",
+      body: JSON.stringify(usuario),
       headers: {
         'Content-Type': 'application/json',
       },
     })
-    .then(() => {
-      alert("Usuario adicionado com sucesso!")
-      lerUsuarios()
+    .then(() => { 
+      alert("Usuário cadastrado com sucesso!")
+      getUsuarios()
     })
-    .catch(() => alert("Erro ao adicionar o usuário!"))
+    .catch(() => alert("Erro ao cadastrar usuário!"))
   }
 
-  function editarUsuario(dadosUsuario, id){
+  function editarUsuario(usuario, id){
+    if(usuario.nome == ""){
+      alert("O usuário precisa ter um nome!")
+    }
+
     fetch("http://localhost:3000/usuarios/" + id, {
-      method: "PUT", // editar
-      body: JSON.stringify(dadosUsuario),
+      method: "PUT",
+      body: JSON.stringify(usuario),
       headers: {
         'Content-Type': 'application/json',
       },
     })
-    .then(() => {
-      alert("Usuario atualizado com sucesso!")
-      lerUsuarios()
+    .then(() => { 
+      alert("Usuário cadastrado com sucesso!")
+      getUsuarios()
     })
-    .catch(() => alert("Erro ao atualizar o usuário!"))
+    .catch(() => alert("Erro ao cadastrar usuário!"))
   }
-
+  
   function removerUsuario(id){
     fetch("http://localhost:3000/usuarios/" + id, {
-      method: "DELETE", // deletar
+      method: "DELETE",
     })
-    .then(() => {
-      alert("Usuario removido com sucesso!")
-      lerUsuarios()
+    .then(() => { 
+      alert("Usuário removido com sucesso!")
+      getUsuarios()
     })
-    .catch(() => alert("Erro ao remover o usuário!"))
+    .catch(() => alert("Erro ao remover usuário!"))
   }
 
-
   return (
-    <UsuariosContext.Provider value={{usuarios, cadastrarUsuario, editarUsuario, removerUsuario, lerUsuariosPorId}}>
+    <UsuariosContext.Provider value={{usuarios, login, cadastrarUsuario, removerUsuario, editarUsuario, getUsuarioPorId}}>
       {children}
     </UsuariosContext.Provider>
   )
 }
+
